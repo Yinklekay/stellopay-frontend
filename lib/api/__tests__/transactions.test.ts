@@ -184,7 +184,11 @@ describe("getTransactionsCursor", () => {
   const originalData = [...allTransactions];
 
   afterEach(() => {
-    allTransactions.splice(0, allTransactions.length, ...originalData);
+    allTransactions.splice(
+      0,
+      allTransactions.length,
+      ...originalData,
+    );
   });
 
   it("walks the whole list with no duplicate ids across adjacent pages", async () => {
@@ -212,7 +216,10 @@ describe("getTransactionsCursor", () => {
     const page1 = await getTransactionsCursor({ pageSize: 2 });
     const page1Ids = page1.data.map((t) => t.id);
 
-    const page2 = await getTransactionsCursor({ pageSize: 2, cursor: page1.nextCursor });
+    const page2 = await getTransactionsCursor({
+      pageSize: 2,
+      cursor: page1.nextCursor,
+    });
     const page2Ids = page2.data.map((t) => t.id);
 
     const intersection = page1Ids.filter((id) => page2Ids.includes(id));
@@ -229,7 +236,10 @@ describe("getTransactionsCursor", () => {
     const deleteIndex = allTransactions.indexOf(toDelete!);
     allTransactions.splice(deleteIndex, 1);
 
-    const page2 = await getTransactionsCursor({ pageSize: 2, cursor: page1.nextCursor });
+    const page2 = await getTransactionsCursor({
+      pageSize: 2,
+      cursor: page1.nextCursor,
+    });
     expect(page2.total).toBe(originalData.length - 1);
 
     // No duplicate of an already-seen id, and it still completes the walk.
@@ -246,15 +256,23 @@ describe("getTransactionsCursor", () => {
     const boundary = page1.nextCursor;
 
     // Record the full expected continuation by walking the *unmodified* data.
-    const page2Unmodified = await getTransactionsCursor({ pageSize, cursor: boundary });
+    const page2Unmodified = await getTransactionsCursor({
+      pageSize,
+      cursor: boundary,
+    });
     const expectedIds = page2Unmodified.data.map((t) => t.id);
 
     // Now delete one of the *earlier* (already-returned) records and re-request.
-    const toDelete = allTransactions.find((t) => !expectedIds.includes(t.id));
+    const toDelete = allTransactions.find(
+      (t) => !expectedIds.includes(t.id),
+    );
     expect(toDelete).toBeDefined();
     allTransactions.splice(allTransactions.indexOf(toDelete!), 1);
 
-    const page2AfterDeletion = await getTransactionsCursor({ pageSize, cursor: boundary });
+    const page2AfterDeletion = await getTransactionsCursor({
+      pageSize,
+      cursor: boundary,
+    });
     const actualIds = page2AfterDeletion.data.map((t) => t.id);
     expect(actualIds).toEqual(expectedIds);
   });
@@ -263,10 +281,18 @@ describe("getTransactionsCursor", () => {
     const page1 = await getTransactionsCursor({ pageSize: 2 });
     const page1Ids = page1.data.map((t) => t.id);
 
-    const repeatA = await getTransactionsCursor({ pageSize: 2, cursor: page1.nextCursor });
-    const repeatB = await getTransactionsCursor({ pageSize: 2, cursor: page1.nextCursor });
+    const repeatA = await getTransactionsCursor({
+      pageSize: 2,
+      cursor: page1.nextCursor,
+    });
+    const repeatB = await getTransactionsCursor({
+      pageSize: 2,
+      cursor: page1.nextCursor,
+    });
 
-    expect(repeatA.data.map((t) => t.id)).toEqual(repeatB.data.map((t) => t.id));
+    expect(repeatA.data.map((t) => t.id)).toEqual(
+      repeatB.data.map((t) => t.id),
+    );
     expect(repeatA.nextCursor).toBe(repeatB.nextCursor);
     expect(repeatA.hasMore).toBe(repeatB.hasMore);
     expect(repeatA.nextCursor).not.toBe(page1.nextCursor); // advanced past page 1
@@ -281,7 +307,10 @@ describe("getTransactionsCursor", () => {
   });
 
   it("treats an invalid cursor as the first page instead of looping", async () => {
-    const result = await getTransactionsCursor({ pageSize: 2, cursor: "!!!not-a-cursor!!!" });
+    const result = await getTransactionsCursor({
+      pageSize: 2,
+      cursor: "!!!not-a-cursor!!!",
+    });
     expect(result.data).toHaveLength(2);
     expect(result.total).toBe(originalData.length);
   });
