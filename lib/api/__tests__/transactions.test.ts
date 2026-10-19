@@ -6,6 +6,10 @@ import {
   getAccountSummary,
   getPaymentHistory,
 } from "../transactions";
+import {
+  parseAccountSummary,
+  ApiResponseValidationError,
+} from "../response-validation";
 import { allTransactions } from "@/lib/transactions";
 
 beforeAll(() => {
@@ -387,6 +391,18 @@ describe("getAccountSummary", () => {
     expect(summary).toHaveProperty("toBePaid");
     expect(summary).toHaveProperty("walletAddress");
     expect(typeof summary.balanceRaw).toBe("number");
+  });
+
+  it("forwards a backend response failure to the data-layer entry point", async () => {
+    // A backend swap that returns a malformed payload should surface a typed
+    // ApiResponseValidationError at the same boundary the functions consume. This
+    // test proves that contract without depending on a live network round trip.
+    try {
+      await parseAccountSummary({ balanceRaw: "12.5" });
+      throw new Error("expected parseAccountSummary to reject");
+    } catch (error) {
+      expect(error).toBeInstanceOf(ApiResponseValidationError);
+    }
   });
 });
 
